@@ -12,6 +12,9 @@ func main() {
 	mux.HandleFunc("GET /snippet/create", handlerSnippetCreate)
 	mux.HandleFunc("POST /snippet/create", handlerSnippetCreatePost)
 
+	fileServer := http.FileServer(http.Dir("./ui/static"))
+	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
 	port := "4000"
 	srv := &http.Server{
 		Addr:    ":" + port,
