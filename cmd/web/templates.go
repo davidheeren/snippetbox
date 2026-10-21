@@ -1,15 +1,24 @@
 package main
 
 import (
+	"net/http"
 	"path/filepath"
 	"text/template"
+	"time"
 
 	"github.com/davidheeren/snippetbox/internal/database"
 )
 
 type templateData struct {
-	Snippet  database.Snippet
-	Snippets []database.Snippet
+	CurrentYear int
+	Snippet     database.Snippet
+	Snippets    []database.Snippet
+}
+
+func (cfg *config) newTemplateData(r *http.Request) templateData {
+	return templateData{
+		CurrentYear: time.Now().Year(),
+	}
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {

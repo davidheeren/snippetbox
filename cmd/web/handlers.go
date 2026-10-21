@@ -16,9 +16,9 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cfg.render(w, r, http.StatusOK, "home.html", templateData{
-		Snippets: snippets,
-	})
+	data := cfg.newTemplateData(r)
+	data.Snippets = snippets
+	cfg.render(w, r, http.StatusOK, "home.html", data)
 }
 
 func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
@@ -38,9 +38,9 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cfg.render(w, r, http.StatusOK, "view.html", templateData{
-		Snippet: snippet,
-	})
+	data := cfg.newTemplateData(r)
+	data.Snippet = snippet
+	cfg.render(w, r, http.StatusOK, "view.html", data)
 }
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {
