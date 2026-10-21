@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"text/template"
 
@@ -44,7 +43,24 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", snippet)
+	data := templateData{
+		Snippet: snippet,
+	}
+
+	ts, err := template.ParseFiles(
+		"./ui/html/base.html",
+		"./ui/html/pages/view.html",
+		"./ui/html/partials/nav.html")
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
 }
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {
