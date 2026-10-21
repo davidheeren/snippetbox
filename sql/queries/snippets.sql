@@ -8,3 +8,7 @@ VALUES (
     $2,
     $3
 ) RETURNING *;
+
+-- name: GetSnippet :one
+SELECT * FROM snippets
+WHERE id = $1;

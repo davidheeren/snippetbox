@@ -8,6 +8,8 @@ package database
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createSnippet = `-- name: CreateSnippet :one
@@ -30,6 +32,25 @@ type CreateSnippetParams struct {
 
 func (q *Queries) CreateSnippet(ctx context.Context, arg CreateSnippetParams) (Snippet, error) {
 	row := q.db.QueryRowContext(ctx, createSnippet, arg.ExpiresAt, arg.Title, arg.Content)
+	var i Snippet
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiresAt,
+		&i.Title,
+		&i.Content,
+	)
+	return i, err
+}
+
+const getSnippet = `-- name: GetSnippet :one
+SELECT id, created_at, updated_at, expires_at, title, content FROM snippets
+WHERE id = $1
+`
+
+func (q *Queries) GetSnippet(ctx context.Context, id uuid.UUID) (Snippet, error) {
+	row := q.db.QueryRowContext(ctx, getSnippet, id)
 	var i Snippet
 	err := row.Scan(
 		&i.ID,

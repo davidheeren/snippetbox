@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"text/template"
+
+	"github.com/google/uuid"
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
@@ -25,14 +28,23 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
+	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		cfg.serverError(w, r, err)
+		cfg.clientError(w, http.StatusNotFound)
 		return
 	}
 
-	msg := fmt.Sprintf("Display a specific snippet with ID %d...", id)
-	w.Write([]byte(msg))
+	snippet, err := cfg.dbQueries.GetSnippet(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			cfg.clientError(w, http.StatusNotFound)
+		} else {
+			cfg.serverError(w, r, err)
+		}
+		return
+	}
+
+	fmt.Fprintf(w, "%+v", snippet)
 }
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {

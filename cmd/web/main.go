@@ -1,11 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/davidheeren/snippetbox/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type arguments struct {
@@ -13,7 +18,8 @@ type arguments struct {
 }
 
 type config struct {
-	logger *slog.Logger
+	logger    *slog.Logger
+	dbQueries *database.Queries
 }
 
 func main() {
@@ -21,12 +27,28 @@ func main() {
 	flag.StringVar(&args.addr, "addr", ":4000", "HTTP network address")
 	flag.Parse()
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbURL, ok := os.LookupEnv("DB_URL")
+	if !ok {
+		log.Fatal("DB_URL environment variable must be set")
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 	}))
 
 	cfg := &config{
-		logger: logger,
+		logger:    logger,
+		dbQueries: database.New(db),
 	}
 
 	srv := &http.Server{
