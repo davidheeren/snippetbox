@@ -62,3 +62,37 @@ func (q *Queries) GetSnippet(ctx context.Context, id uuid.UUID) (Snippet, error)
 	)
 	return i, err
 }
+
+const getSnippets = `-- name: GetSnippets :many
+SELECT id, created_at, updated_at, expires_at, title, content FROM snippets
+`
+
+func (q *Queries) GetSnippets(ctx context.Context) ([]Snippet, error) {
+	rows, err := q.db.QueryContext(ctx, getSnippets)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Snippet
+	for rows.Next() {
+		var i Snippet
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExpiresAt,
+			&i.Title,
+			&i.Content,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

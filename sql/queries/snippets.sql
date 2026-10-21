@@ -12,3 +12,6 @@ VALUES (
 -- name: GetSnippet :one
 SELECT * FROM snippets
 WHERE id = $1;
+
+-- name: GetSnippets :many
+SELECT * FROM snippets;

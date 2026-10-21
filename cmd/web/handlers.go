@@ -19,7 +19,17 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.ExecuteTemplate(w, "base", nil)
+	snippets, err := cfg.dbQueries.GetSnippets(r.Context())
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	data := templateData{
+		Snippets: snippets,
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		cfg.serverError(w, r, err)
 		return
