@@ -13,15 +13,13 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/home.html",
 		"./ui/html/partials/nav.html")
 	if err != nil {
-		cfg.logger.Error(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		cfg.serverError(w, r, err)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		cfg.logger.Error(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		cfg.serverError(w, r, err)
 		return
 	}
 }
@@ -29,8 +27,7 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		cfg.logger.Error(err.Error())
-		http.NotFound(w, r)
+		cfg.serverError(w, r, err)
 		return
 	}
 
