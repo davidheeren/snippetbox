@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -13,4 +14,20 @@ func (cfg *config) serverError(w http.ResponseWriter, r *http.Request, err error
 
 func (cfg *config) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
+}
+
+func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+	ts, ok := cfg.templateCache[page]
+	if !ok {
+		err := fmt.Errorf("the template %s does not exist", page)
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(status)
+
+	err := ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		cfg.serverError(w, r, err)
+	}
 }

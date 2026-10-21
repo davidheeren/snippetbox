@@ -4,20 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"text/template"
 
 	"github.com/google/uuid"
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
-	ts, err := template.ParseFiles(
-		"./ui/html/base.html",
-		"./ui/html/pages/home.html",
-		"./ui/html/partials/nav.html")
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
 
 	snippets, err := cfg.dbQueries.GetSnippets(r.Context())
 	if err != nil {
@@ -25,15 +16,9 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := templateData{
+	cfg.render(w, r, http.StatusOK, "home.html", templateData{
 		Snippets: snippets,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
+	})
 }
 
 func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
@@ -53,24 +38,9 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := templateData{
+	cfg.render(w, r, http.StatusOK, "view.html", templateData{
 		Snippet: snippet,
-	}
-
-	ts, err := template.ParseFiles(
-		"./ui/html/base.html",
-		"./ui/html/pages/view.html",
-		"./ui/html/partials/nav.html")
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
+	})
 }
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {

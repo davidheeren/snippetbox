@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"text/template"
 
 	"github.com/davidheeren/snippetbox/internal/database"
 	"github.com/joho/godotenv"
@@ -18,8 +19,9 @@ type arguments struct {
 }
 
 type config struct {
-	logger    *slog.Logger
-	dbQueries *database.Queries
+	logger        *slog.Logger
+	dbQueries     *database.Queries
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -46,9 +48,15 @@ func main() {
 		AddSource: true,
 	}))
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := &config{
-		logger:    logger,
-		dbQueries: database.New(db),
+		logger:        logger,
+		dbQueries:     database.New(db),
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
