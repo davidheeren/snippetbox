@@ -12,7 +12,7 @@
         {{range .Snippets}}
         <tr>
             <td><a href="/snippets/view/{{.ID}}">{{.Title}}</a></td>
-            <td>{{.CreatedAt.Format "January 2, 2006 3:04 PM"}}</td>
+            <td><time>{{iso .CreatedAt}}<time></td>
             <td>#{{.ID}}</td>
         </tr>
         {{end}}

@@ -251,11 +251,11 @@ button:hover {
     display: inline-block;
 }
 
-.snippet .metadata time:first-child {
+.snippet .metadata span:first-child {
     float: left;
 }
 
-.snippet .metadata time:last-child {
+.snippet .metadata span:last-child {
     float: right;
 }
 
