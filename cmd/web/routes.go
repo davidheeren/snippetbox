@@ -1,6 +1,10 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/justinas/alice"
+)
 
 func (cfg *config) routes() http.Handler {
 	mux := http.NewServeMux()
@@ -13,5 +17,6 @@ func (cfg *config) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	return cfg.middlewareRecoverPanic(cfg.middlewareLogRequest(middlewareCommonHeaders(mux)))
+	standardMiddleware := alice.New(cfg.middlewareRecoverPanic, cfg.middlewareLogRequest, middlewareCommonHeaders)
+	return standardMiddleware.Then(mux)
 }
