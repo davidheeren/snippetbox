@@ -2,7 +2,7 @@ package main
 
 import "net/http"
 
-func (cfg *config) routes() *http.ServeMux {
+func (cfg *config) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /{$}", cfg.handlerHome)
@@ -13,5 +13,5 @@ func (cfg *config) routes() *http.ServeMux {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	return mux
+	return middlewareCommonHeaders(mux)
 }
