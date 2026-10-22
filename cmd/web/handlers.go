@@ -51,7 +51,7 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 	cfg.render(w, r, http.StatusOK, "create.html", data)
 }
 
-func (cfg *config) handlerSnippetCreatePost(w http.ResponseWriter, r *http.Request) {
+func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		cfg.clientError(w, http.StatusBadRequest)
@@ -80,4 +80,31 @@ func (cfg *config) handlerSnippetCreatePost(w http.ResponseWriter, r *http.Reque
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/snippets/view/%s", snippet.ID.String()), http.StatusSeeOther)
+}
+
+func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		cfg.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	err = cfg.dbQueries.DeleteSnippet(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			cfg.clientError(w, http.StatusNotFound)
+		} else {
+			cfg.serverError(w, r, err)
+		}
+		return
+	}
+
+	// regular redirects don't work with htmx
+	if r.Header.Get("HX-Request") == "true" {
+		w.Header().Set("HX-Redirect", "/")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

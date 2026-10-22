@@ -13,5 +13,9 @@ VALUES (
 SELECT * FROM snippets
 WHERE id = $1;
 
+-- name: DeleteSnippet :exec
+DELETE FROM snippets
+WHERE id = $1;
+
 -- name: GetSnippets :many
 SELECT * FROM snippets;
