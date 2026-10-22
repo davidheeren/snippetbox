@@ -12,7 +12,7 @@ func (cfg *config) routes() http.Handler {
 	mux.HandleFunc("GET /{$}", cfg.handlerHome)
 	mux.HandleFunc("GET /snippets/view/{id}", cfg.handlerSnippetView)
 	mux.HandleFunc("GET /snippets/create", cfg.handlerSnippetCreate)
-	mux.HandleFunc("POST /snippets/create", cfg.handlerSnippetCreatePost)
+	mux.HandleFunc("POST /snippets", cfg.handlerSnippetCreatePost)
 
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))

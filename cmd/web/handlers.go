@@ -61,11 +61,6 @@ func (cfg *config) handlerSnippetCreatePost(w http.ResponseWriter, r *http.Reque
 	title := r.PostForm.Get("title")
 	content := r.PostForm.Get("content")
 
-	// if title == "" || content == "" {
-	// 	cfg.clientError(w, http.StatusBadRequest)
-	// 	return
-	// }
-
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
 		cfg.clientError(w, http.StatusBadRequest)
