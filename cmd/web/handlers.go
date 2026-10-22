@@ -9,7 +9,6 @@ import (
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
-
 	snippets, err := cfg.dbQueries.GetSnippets(r.Context())
 	if err != nil {
 		cfg.serverError(w, r, err)

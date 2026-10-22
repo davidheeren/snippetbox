@@ -13,5 +13,5 @@ func (cfg *config) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	return cfg.middlewareLogRequest(middlewareCommonHeaders(mux))
+	return cfg.middlewareRecoverPanic(cfg.middlewareLogRequest(middlewareCommonHeaders(mux)))
 }

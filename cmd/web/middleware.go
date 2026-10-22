@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -26,6 +27,20 @@ func (cfg *config) middlewareLogRequest(next http.Handler) http.Handler {
 			slog.String("method", r.Method),
 			slog.String("uri", r.URL.RequestURI()))
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (cfg *config) middlewareRecoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			pv := recover()
+			if pv != nil {
+				// make go http server close this connection
+				w.Header().Set("Connection", "close")
+				cfg.serverError(w, r, fmt.Errorf("%v", pv))
+			}
+		}()
 		next.ServeHTTP(w, r)
 	})
 }
