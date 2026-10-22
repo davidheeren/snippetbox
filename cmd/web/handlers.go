@@ -43,7 +43,8 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a form for creating a new snippet..."))
+	data := cfg.newTemplateData(r)
+	cfg.render(w, r, http.StatusOK, "create.html", data)
 }
 
 func (cfg *config) handlerSnippetCreatePost(w http.ResponseWriter, r *http.Request) {
