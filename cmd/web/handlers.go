@@ -3,8 +3,12 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
+	"github.com/davidheeren/snippetbox/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -48,6 +52,37 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *config) handlerSnippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Save a new snippet..."))
+	err := r.ParseForm()
+	if err != nil {
+		cfg.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	// if title == "" || content == "" {
+	// 	cfg.clientError(w, http.StatusBadRequest)
+	// 	return
+	// }
+
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		cfg.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	expiresDuration := time.Duration(int(time.Hour) * 24 * expires)
+
+	snippet, err := cfg.dbQueries.CreateSnippet(r.Context(), database.CreateSnippetParams{
+		ExpiresAt: time.Now().UTC().Add(expiresDuration),
+		Title:     title,
+		Content:   content,
+	})
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/snippets/view/%s", snippet.ID.String()), http.StatusSeeOther)
 }
