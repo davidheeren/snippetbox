@@ -36,3 +36,13 @@ func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, pa
 	w.WriteHeader(status)
 	buf.WriteTo(w)
 }
+
+func (cfg *config) redirect(w http.ResponseWriter, r *http.Request, url string) {
+	if r.Header.Get("HX-Request") == "true" {
+		w.Header().Set("HX-Redirect", url)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	http.Redirect(w, r, url, http.StatusSeeOther)
+}

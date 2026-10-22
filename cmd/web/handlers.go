@@ -103,9 +103,11 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	if len(form.FieldErrors) > 0 {
 		data := cfg.newTemplateData(r)
 		data.Form = form
-		// this currently still renders the creat page but on the /snippets path
-		// not /snippets/create
-		cfg.render(w, r, http.StatusUnprocessableEntity, "create.html", data)
+		if r.Header.Get("HX-Request") == "true" {
+			cfg.render(w, r, http.StatusOK, "create.html", data)
+		} else {
+			cfg.render(w, r, http.StatusUnprocessableEntity, "create.html", data)
+		}
 		return
 	}
 
@@ -121,7 +123,7 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippets/view/%s", snippet.ID.String()), http.StatusSeeOther)
+	cfg.redirect(w, r, fmt.Sprintf("/snippets/view/%s", snippet.ID.String()))
 }
 
 func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) {
@@ -141,12 +143,5 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// regular redirects don't work with htmx
-	if r.Header.Get("HX-Request") == "true" {
-		w.Header().Set("HX-Redirect", "/")
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	cfg.redirect(w, r, "/")
 }
