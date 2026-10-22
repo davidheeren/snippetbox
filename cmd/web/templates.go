@@ -13,6 +13,7 @@ type templateData struct {
 	CurrentYear int
 	Snippet     database.Snippet
 	Snippets    []database.Snippet
+	Form        any
 }
 
 func (cfg *config) newTemplateData(r *http.Request) templateData {

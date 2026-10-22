@@ -50,7 +50,17 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {
 	data := cfg.newTemplateData(r)
+	data.Form = snippetCreateForm{
+		Expires: 7,
+	}
 	cfg.render(w, r, http.StatusOK, "create.html", data)
+}
+
+type snippetCreateForm struct {
+	Title       string
+	Content     string
+	Expires     int
+	FieldErrors map[string]string
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
@@ -63,30 +73,39 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("title")
 	content := r.PostForm.Get("content")
 
-	fieldErrors := make(map[string]string)
-
-	if strings.TrimSpace(title) == "" {
-		fieldErrors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(title) > 100 {
-		fieldErrors["title"] = "This field cannot be more than 100 characters long"
-	}
-
-	if strings.TrimSpace(content) == "" {
-		fieldErrors["content"] = "This field cannot be blank"
-	}
-
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
 		cfg.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	if expires < 0 {
-		fieldErrors["expires"] = "This field cannot be less than one"
+	form := snippetCreateForm{
+		Title:       r.PostForm.Get("title"),
+		Content:     r.PostForm.Get("content"),
+		Expires:     expires,
+		FieldErrors: map[string]string{},
 	}
 
-	if len(fieldErrors) > 0 {
-		fmt.Fprint(w, fieldErrors)
+	if strings.TrimSpace(title) == "" {
+		form.FieldErrors["title"] = "This field cannot be blank"
+	} else if utf8.RuneCountInString(title) > 100 {
+		form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
+	}
+
+	if strings.TrimSpace(content) == "" {
+		form.FieldErrors["content"] = "This field cannot be blank"
+	}
+
+	if expires < 0 {
+		form.FieldErrors["expires"] = "This field cannot be less than one"
+	}
+
+	if len(form.FieldErrors) > 0 {
+		data := cfg.newTemplateData(r)
+		data.Form = form
+		// this currently still renders the creat page but on the /snippets path
+		// not /snippets/create
+		cfg.render(w, r, http.StatusUnprocessableEntity, "create.html", data)
 		return
 	}
 
