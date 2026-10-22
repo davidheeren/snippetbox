@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"log/slog"
+	"net/http"
+)
 
 func middlewareCommonHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -10,6 +13,18 @@ func middlewareCommonHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "deny")
 		w.Header().Set("X-XSS-Protection", "0")
 		w.Header().Set("Server", "Go")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (cfg *config) middlewareLogRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.logger.Info("received request",
+			slog.String("ip", r.RemoteAddr),
+			slog.String("proto", r.Proto),
+			slog.String("method", r.Method),
+			slog.String("uri", r.URL.RequestURI()))
 
 		next.ServeHTTP(w, r)
 	})
