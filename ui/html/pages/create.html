@@ -4,11 +4,11 @@
 <form action="/snippets" method="POST">
     <div>
         <label>Title:</label>
-        <input type="text" name="title" minlength="3" required>
+        <input type="text" name="title" minlength="3" maxlength="100" required>
     </div>
     <div>
         <label>Content:</label>
-        <textarea name="content"></textarea>
+        <textarea name="content" required></textarea>
     </div>
     <div>
         <label>Delete in:</label>

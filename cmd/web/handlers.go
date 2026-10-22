@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/davidheeren/snippetbox/internal/database"
 	"github.com/google/uuid"
@@ -61,9 +63,30 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("title")
 	content := r.PostForm.Get("content")
 
+	fieldErrors := make(map[string]string)
+
+	if strings.TrimSpace(title) == "" {
+		fieldErrors["title"] = "This field cannot be blank"
+	} else if utf8.RuneCountInString(title) > 100 {
+		fieldErrors["title"] = "This field cannot be more than 100 characters long"
+	}
+
+	if strings.TrimSpace(content) == "" {
+		fieldErrors["content"] = "This field cannot be blank"
+	}
+
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
 		cfg.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	if expires < 0 {
+		fieldErrors["expires"] = "This field cannot be less than one"
+	}
+
+	if len(fieldErrors) > 0 {
+		fmt.Fprint(w, fieldErrors)
 		return
 	}
 
