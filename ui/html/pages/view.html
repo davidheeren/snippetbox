@@ -12,9 +12,11 @@
             <span>Created: <time>{{iso .CreatedAt}}</time></span>
             <span>Expires: <time>{{iso .ExpiresAt}}</time></span>
         </div>
+        <div class="metadata">
+            <button class="delete" hx-delete="/snippets/{{.ID}}" hx-confirm="Delete this snippet?" hx-target="closest .snippet">
+                Delete snippet
+            </button>
+        </div>
     </div>
-    <button class="delete" hx-delete="/snippets/{{.ID}}" hx-confirm="Delete this snippet?">
-        Delete snippet
-    </button>
     {{end}}
 {{end}}

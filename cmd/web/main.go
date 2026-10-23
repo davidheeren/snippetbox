@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/davidheeren/snippetbox/internal/database"
+	"github.com/go-playground/form"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -22,6 +23,7 @@ type config struct {
 	logger        *slog.Logger
 	dbQueries     *database.Queries
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -57,6 +59,7 @@ func main() {
 		logger:        logger,
 		dbQueries:     database.New(db),
 		templateCache: templateCache,
+		formDecoder:   form.NewDecoder(),
 	}
 
 	srv := &http.Server{

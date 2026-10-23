@@ -10,10 +10,20 @@ import (
 func (cfg *config) serverError(w http.ResponseWriter, r *http.Request, err error) {
 	// cfg.logger.Error(err.Error(), slog.String("method", r.Method), slog.String("uri", r.URL.RequestURI()), slog.String("trace", string(debug.Stack())))
 	cfg.logger.Error(err.Error(), slog.String("method", r.Method), slog.String("uri", r.URL.RequestURI()))
+	if r.Header.Get("HX-Request") == "true" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return
+	}
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (cfg *config) clientError(w http.ResponseWriter, status int) {
+func (cfg *config) clientError(w http.ResponseWriter, r *http.Request, status int) {
+	if r.Header.Get("HX-Request") == "true" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(http.StatusText(status)))
+		return
+	}
 	http.Error(w, http.StatusText(status), status)
 }
 

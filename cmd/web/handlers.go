@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/davidheeren/snippetbox/internal/database"
@@ -28,14 +27,14 @@ func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
 func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		cfg.clientError(w, http.StatusNotFound)
+		cfg.clientError(w, r, http.StatusNotFound)
 		return
 	}
 
 	snippet, err := cfg.dbQueries.GetSnippet(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			cfg.clientError(w, http.StatusNotFound)
+			cfg.clientError(w, r, http.StatusNotFound)
 		} else {
 			cfg.serverError(w, r, err)
 		}
@@ -56,35 +55,30 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 }
 
 type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		cfg.clientError(w, http.StatusBadRequest)
+		cfg.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	var form snippetCreateForm
+	err = cfg.formDecoder.Decode(&form, r.PostForm)
 	if err != nil {
-		cfg.clientError(w, http.StatusBadRequest)
+		cfg.clientError(w, r, http.StatusBadRequest)
 		return
-	}
-
-	form := snippetCreateForm{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
 	}
 
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
-	form.CheckField(expires > 0, "expires", "This field cannot be less than one")
+	form.CheckField(form.Expires > 0, "expires", "This field cannot be less than one")
 
 	if !form.Valid() {
 		data := cfg.newTemplateData(r)
@@ -97,7 +91,7 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresDuration := time.Duration(int(time.Hour) * 24 * expires)
+	expiresDuration := time.Duration(int(time.Hour) * 24 * form.Expires)
 
 	snippet, err := cfg.dbQueries.CreateSnippet(r.Context(), database.CreateSnippetParams{
 		ExpiresAt: time.Now().UTC().Add(expiresDuration),
@@ -115,14 +109,14 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		cfg.clientError(w, http.StatusNotFound)
+		cfg.clientError(w, r, http.StatusNotFound)
 		return
 	}
 
 	err = cfg.dbQueries.DeleteSnippet(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			cfg.clientError(w, http.StatusNotFound)
+			cfg.clientError(w, r, http.StatusNotFound)
 		} else {
 			cfg.serverError(w, r, err)
 		}
