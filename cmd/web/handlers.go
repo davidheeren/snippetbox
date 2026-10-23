@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/davidheeren/snippetbox/internal/database"
+	"github.com/davidheeren/snippetbox/internal/validator"
 	"github.com/google/uuid"
 )
 
@@ -57,10 +56,10 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 }
 
 type snippetCreateForm struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
+	Title   string
+	Content string
+	Expires int
+	validator.Validator
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
@@ -70,9 +69,6 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
-
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
 		cfg.clientError(w, http.StatusBadRequest)
@@ -80,27 +76,17 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := snippetCreateForm{
-		Title:       r.PostForm.Get("title"),
-		Content:     r.PostForm.Get("content"),
-		Expires:     expires,
-		FieldErrors: map[string]string{},
+		Title:   r.PostForm.Get("title"),
+		Content: r.PostForm.Get("content"),
+		Expires: expires,
 	}
 
-	if strings.TrimSpace(title) == "" {
-		form.FieldErrors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(title) > 100 {
-		form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
-	}
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(expires > 0, "expires", "This field cannot be less than one")
 
-	if strings.TrimSpace(content) == "" {
-		form.FieldErrors["content"] = "This field cannot be blank"
-	}
-
-	if expires < 0 {
-		form.FieldErrors["expires"] = "This field cannot be less than one"
-	}
-
-	if len(form.FieldErrors) > 0 {
+	if !form.Valid() {
 		data := cfg.newTemplateData(r)
 		data.Form = form
 		if r.Header.Get("HX-Request") == "true" {
@@ -115,8 +101,8 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := cfg.dbQueries.CreateSnippet(r.Context(), database.CreateSnippetParams{
 		ExpiresAt: time.Now().UTC().Add(expiresDuration),
-		Title:     title,
-		Content:   content,
+		Title:     form.Title,
+		Content:   form.Content,
 	})
 	if err != nil {
 		cfg.serverError(w, r, err)
