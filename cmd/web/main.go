@@ -10,7 +10,7 @@ import (
 	"text/template"
 
 	"github.com/davidheeren/snippetbox/internal/database"
-	"github.com/go-playground/form"
+	"github.com/go-playground/form/v4"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
