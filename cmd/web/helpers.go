@@ -37,6 +37,26 @@ func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, pa
 	buf.WriteTo(w)
 }
 
+func (cfg *config) renderPage(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+	ts, ok := cfg.templateCache[page]
+	if !ok {
+		err := fmt.Errorf("the template %s does not exist", page)
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+
+	err := ts.ExecuteTemplate(buf, "main", data)
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(status)
+	buf.WriteTo(w)
+}
+
 func (cfg *config) redirect(w http.ResponseWriter, r *http.Request, url string) {
 	if r.Header.Get("HX-Request") == "true" {
 		w.Header().Set("HX-Redirect", url)

@@ -104,9 +104,9 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 		data := cfg.newTemplateData(r)
 		data.Form = form
 		if r.Header.Get("HX-Request") == "true" {
-			cfg.render(w, r, http.StatusOK, "create.html", data)
+			cfg.renderPage(w, r, http.StatusOK, "create.html", data)
 		} else {
-			cfg.render(w, r, http.StatusUnprocessableEntity, "create.html", data)
+			cfg.renderPage(w, r, http.StatusUnprocessableEntity, "create.html", data)
 		}
 		return
 	}

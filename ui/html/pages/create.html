@@ -1,7 +1,7 @@
 {{define "title"}}Create a New Snippet{{end}}
 
 {{define "main"}}
-<form hx-post="/snippets" hx-target="body">
+<form hx-post="/snippets">
     <div>
         <label>Title:</label>
         {{with .Form.FieldErrors.title}}
