@@ -77,6 +77,8 @@ func main() {
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	logger.Info("Serving server", slog.String("url", "http://localhost"+args.addr))
-	log.Fatal(srv.ListenAndServe())
+	logger.Info("Serving server", slog.String("url", "https://localhost"+args.addr))
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	logger.Error(err.Error())
+	os.Exit(1)
 }
