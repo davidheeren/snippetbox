@@ -104,7 +104,6 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
-
 	cfg.redirect(w, r, fmt.Sprintf("/snippets/view/%s", snippet.ID.String()))
 }
 
@@ -125,5 +124,6 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	cfg.sessionManager.Put(r.Context(), "flash", "Snippet successfully deleted")
 	cfg.redirect(w, r, "/")
 }
