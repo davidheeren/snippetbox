@@ -72,8 +72,9 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:    args.addr,
-		Handler: cfg.routes(),
+		Addr:     args.addr,
+		Handler:  cfg.routes(),
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
 	logger.Info("Serving server", slog.String("url", "http://localhost"+args.addr))
