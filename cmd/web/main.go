@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/davidheeren/snippetbox/internal/database"
 	"github.com/go-playground/form/v4"
 	"github.com/joho/godotenv"
@@ -20,10 +23,11 @@ type arguments struct {
 }
 
 type config struct {
-	logger        *slog.Logger
-	dbQueries     *database.Queries
-	templateCache map[string]*template.Template
-	formDecoder   *form.Decoder
+	logger         *slog.Logger
+	dbQueries      *database.Queries
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -55,11 +59,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	sessionManager := scs.New()
+	sessionManager.Store = postgresstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	cfg := &config{
-		logger:        logger,
-		dbQueries:     database.New(db),
-		templateCache: templateCache,
-		formDecoder:   form.NewDecoder(),
+		logger:         logger,
+		dbQueries:      database.New(db),
+		templateCache:  templateCache,
+		formDecoder:    form.NewDecoder(),
+		sessionManager: sessionManager,
 	}
 
 	srv := &http.Server{

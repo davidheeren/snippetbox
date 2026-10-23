@@ -9,11 +9,13 @@ import (
 func (cfg *config) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /{$}", cfg.handlerHome)
-	mux.HandleFunc("GET /snippets/view/{id}", cfg.handlerSnippetView)
-	mux.HandleFunc("GET /snippets/create", cfg.handlerSnippetCreate)
-	mux.HandleFunc("POST /snippets", cfg.handlerSnippetPost)
-	mux.HandleFunc("DELETE /snippets/{id}", cfg.handlerSnippetDelete)
+	dynamic := alice.New(cfg.sessionManager.LoadAndSave)
+
+	mux.Handle("GET /{$}", dynamic.ThenFunc(cfg.handlerHome))
+	mux.Handle("GET /snippets/view/{id}", dynamic.ThenFunc(cfg.handlerSnippetView))
+	mux.Handle("GET /snippets/create", dynamic.ThenFunc(cfg.handlerSnippetCreate))
+	mux.Handle("POST /snippets", dynamic.ThenFunc(cfg.handlerSnippetPost))
+	mux.Handle("DELETE /snippets/{id}", dynamic.ThenFunc(cfg.handlerSnippetDelete))
 
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
