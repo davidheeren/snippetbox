@@ -11,10 +11,13 @@ nav {
     background-image: linear-gradient(var(--b-bg-2), var(--b-bg-1));
     border: 2px solid var(--b-bg-2);
     margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
 }
 
 nav a {
     padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 form,

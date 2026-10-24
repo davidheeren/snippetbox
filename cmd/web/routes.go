@@ -17,6 +17,12 @@ func (cfg *config) routes() http.Handler {
 	mux.Handle("POST /snippets", dynamic.ThenFunc(cfg.handlerSnippetPost))
 	mux.Handle("DELETE /snippets/{id}", dynamic.ThenFunc(cfg.handlerSnippetDelete))
 
+	mux.Handle("GET /users/signup", dynamic.ThenFunc(cfg.handlerUserSignup))
+	mux.Handle("POST /users", dynamic.ThenFunc(cfg.handlerUserSignupPost))
+	mux.Handle("GET /users/login", dynamic.ThenFunc(cfg.handlerUserLogin))
+	mux.Handle("POST /users/login", dynamic.ThenFunc(cfg.handlerUserLoginPost))
+	mux.Handle("POST /users/logout", dynamic.ThenFunc(cfg.handlerUserLogoutPost))
+
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 

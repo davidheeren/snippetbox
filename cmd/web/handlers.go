@@ -128,3 +128,23 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 	cfg.sessionManager.Put(r.Context(), "flash", "Snippet successfully deleted!")
 	cfg.redirect(w, r, "/")
 }
+
+func (cfg *config) handlerUserSignup(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Display a form for signing up a new user...")
+}
+
+func (cfg *config) handlerUserSignupPost(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Create a new user...")
+}
+
+func (cfg *config) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Display a form for logging in a user...")
+}
+
+func (cfg *config) handlerUserLoginPost(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Authenticate and login the user...")
+}
+
+func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintln(w, "Logout the user...")
+}
