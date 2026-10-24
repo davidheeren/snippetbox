@@ -267,10 +267,20 @@ func (cfg *config) handlerUserLoginPost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	cfg.sessionManager.Put(r.Context(), "authenticatedUserID", user.ID.String())
-	cfg.sessionManager.Put(r.Context(), "flash", "Your login was successful")
+	cfg.sessionManager.Put(r.Context(), "flash", "You've been logged in successfully!")
 	cfg.redirect(w, r, "/")
 }
 
 func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Logout the user...")
+    err := cfg.sessionManager.RenewToken(r.Context())
+    if err != nil {
+        cfg.serverError(w, r, err)
+        return
+    }
+
+    cfg.sessionManager.Remove(r.Context(), "authenticatedUserID")
+
+    cfg.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	cfg.redirect(w, r, "/")
 }
