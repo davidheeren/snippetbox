@@ -1,7 +1,7 @@
 {{define "title"}}Create a New Snippet{{end}}
 
 {{define "main"}}
-<form hx-post="/snippets">
+<form hx-post="/snippets" hx-swap="outerHTML">
     <div>
         <label>Title:</label>
         {{with .Form.FieldErrors.title}}
@@ -21,9 +21,11 @@
         {{with .Form.FieldErrors.expires}}
             <label class='error'>{{.}}</label>
         {{end}}
-        <input type="radio" name="expires" value="365" {{if (eq .Form.Expires 365)}}checked{{end}}> One Year
-        <input type="radio" name="expires" value="7" {{if (eq .Form.Expires 7)}}checked{{end}}> One Week
-        <input type="radio" name="expires" value="1" {{if (eq .Form.Expires 1)}}checked{{end}}> One Day
+        <div class="radio-group">
+            <input type="radio" name="expires" value="365" {{if (eq .Form.Expires 365)}}checked{{end}}> One Year
+            <input type="radio" name="expires" value="7" {{if (eq .Form.Expires 7)}}checked{{end}}> One Week
+            <input type="radio" name="expires" value="1" {{if (eq .Form.Expires 1)}}checked{{end}}> One Day
+        </div>
     </div>
     <div>
         <input type="submit" value="Publish snippet">
