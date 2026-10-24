@@ -162,7 +162,7 @@ func (cfg *config) handlerUserSignupPost(w http.ResponseWriter, r *http.Request)
 	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
 	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
-	form.CheckField(validator.MinChars(form.Password, 8), "password", "Password must be at least 8 characters")
+	form.CheckField(validator.MinChars(form.Password, 4), "password", "Password must be at least 4 characters")
 
 	if !form.Valid() {
 		data := cfg.newTemplateData(r)
@@ -213,12 +213,62 @@ func (cfg *config) handlerUserSignupPost(w http.ResponseWriter, r *http.Request)
 	cfg.redirect(w, r, "/users/login")
 }
 
+type userLoginForm struct {
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
 func (cfg *config) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Display a form for logging in a user...")
+	data := cfg.newTemplateData(r)
+	data.Form = userLoginForm{}
+	cfg.render(w, r, http.StatusOK, "login.html", data)
 }
 
 func (cfg *config) handlerUserLoginPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Authenticate and login the user...")
+	err := r.ParseForm()
+	if err != nil {
+		cfg.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	var form userLoginForm
+	err = cfg.formDecoder.Decode(&form, r.PostForm)
+	if err != nil {
+		cfg.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	user, err := cfg.dbQueries.GetUserByEmail(r.Context(), form.Email)
+	if err == nil {
+		err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(form.Password))
+		if err != nil {
+			form.AddNonFieldError("Email or password is incorrect")
+		}
+	} else {
+		form.AddNonFieldError("Email or password is incorrect")
+	}
+
+	if !form.Valid() {
+		data := cfg.newTemplateData(r)
+		data.Form = form
+		if r.Header.Get("HX-Request") == "true" {
+			cfg.renderPage(w, r, http.StatusOK, "login.html", data)
+		} else {
+			cfg.renderPage(w, r, http.StatusUnprocessableEntity, "login.html", data)
+		}
+		return
+	}
+
+	err = cfg.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	cfg.sessionManager.Put(r.Context(), "authenticatedUserID", user.ID.String())
+	cfg.sessionManager.Put(r.Context(), "flash", "Your login was successful")
+	cfg.redirect(w, r, "/")
 }
 
 func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request) {
