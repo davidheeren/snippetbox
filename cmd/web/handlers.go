@@ -10,6 +10,8 @@ import (
 	"github.com/davidheeren/snippetbox/internal/database"
 	"github.com/davidheeren/snippetbox/internal/validator"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
@@ -46,19 +48,19 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 	cfg.render(w, r, http.StatusOK, "view.html", data)
 }
 
+type snippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
+}
+
 func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) {
 	data := cfg.newTemplateData(r)
 	data.Form = snippetCreateForm{
 		Expires: 7,
 	}
 	cfg.render(w, r, http.StatusOK, "create.html", data)
-}
-
-type snippetCreateForm struct {
-	Title               string `form:"title"`
-	Content             string `form:"content"`
-	Expires             int    `form:"expires"`
-	validator.Validator `form:"-"`
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
@@ -129,22 +131,96 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 	cfg.redirect(w, r, "/")
 }
 
+type userSignupForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
 func (cfg *config) handlerUserSignup(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Display a form for signing up a new user...")
+	data := cfg.newTemplateData(r)
+	data.Form = userSignupForm{}
+	cfg.render(w, r, http.StatusOK, "signup.html", data)
 }
 
 func (cfg *config) handlerUserSignupPost(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Create a new user...")
+	err := r.ParseForm()
+	if err != nil {
+		cfg.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	var form userSignupForm
+	err = cfg.formDecoder.Decode(&form, r.PostForm)
+	if err != nil {
+		cfg.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "Password must be at least 8 characters")
+
+	if !form.Valid() {
+		data := cfg.newTemplateData(r)
+		data.Form = form
+		if r.Header.Get("HX-Request") == "true" {
+			cfg.renderPage(w, r, http.StatusOK, "signup.html", data)
+		} else {
+			cfg.renderPage(w, r, http.StatusUnprocessableEntity, "signup.html", data)
+		}
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(form.Password), 12)
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	_, err = cfg.dbQueries.CreateUser(r.Context(), database.CreateUserParams{
+		Name:           form.Name,
+		Email:          form.Email,
+		HashedPassword: string(hash),
+	})
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23505" && pqErr.Constraint == "users_email_key" {
+				form.CheckField(false, "email", "This email is already in use")
+			}
+		} else {
+			cfg.serverError(w, r, err)
+			return
+		}
+	}
+
+	if !form.Valid() {
+		data := cfg.newTemplateData(r)
+		data.Form = form
+		if r.Header.Get("HX-Request") == "true" {
+			cfg.renderPage(w, r, http.StatusOK, "signup.html", data)
+		} else {
+			cfg.renderPage(w, r, http.StatusUnprocessableEntity, "signup.html", data)
+		}
+		return
+	}
+
+	cfg.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+	cfg.redirect(w, r, "/users/login")
 }
 
 func (cfg *config) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Display a form for logging in a user...")
+	fmt.Fprintln(w, "Display a form for logging in a user...")
 }
 
 func (cfg *config) handlerUserLoginPost(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Authenticate and login the user...")
+	fmt.Fprintln(w, "Authenticate and login the user...")
 }
 
 func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Logout the user...")
+	fmt.Fprintln(w, "Logout the user...")
 }

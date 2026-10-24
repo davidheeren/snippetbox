@@ -10,6 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type Session struct {
+	Token  string
+	Data   []byte
+	Expiry time.Time
+}
+
 type Snippet struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
@@ -17,4 +23,13 @@ type Snippet struct {
 	ExpiresAt time.Time
 	Title     string
 	Content   string
+}
+
+type User struct {
+	ID             uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Name           string
+	Email          string
+	HashedPassword string
 }
