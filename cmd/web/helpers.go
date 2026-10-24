@@ -76,3 +76,8 @@ func (cfg *config) redirect(w http.ResponseWriter, r *http.Request, url string) 
 
 	http.Redirect(w, r, url, http.StatusSeeOther)
 }
+
+func (cfg *config) isAuthenticated(r *http.Request) bool {
+	// the user could be deleted but kept its session
+    return cfg.sessionManager.Exists(r.Context(), "authenticatedUserID")
+}

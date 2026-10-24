@@ -10,17 +10,19 @@ import (
 )
 
 type templateData struct {
-	CurrentYear int
-	Snippet     database.Snippet
-	Snippets    []database.Snippet
-	Form        any
-	Flash       string
+	CurrentYear     int
+	Snippet         database.Snippet
+	Snippets        []database.Snippet
+	Form            any
+	Flash           string
+	IsAuthenticated bool
 }
 
 func (cfg *config) newTemplateData(r *http.Request) templateData {
 	return templateData{
 		CurrentYear: time.Now().Year(),
 		Flash:       cfg.sessionManager.PopString(r.Context(), "flash"),
+		IsAuthenticated: cfg.isAuthenticated(r),
 	}
 }
 

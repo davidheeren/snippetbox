@@ -282,5 +282,5 @@ func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request)
 
     cfg.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 
-	cfg.redirect(w, r, "/")
+	cfg.redirect(w, r, "/users/login")
 }

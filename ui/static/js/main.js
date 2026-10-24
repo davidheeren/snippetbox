@@ -14,7 +14,7 @@ if (!hasNav) {
     navlink = document.createElement("a")
     navlink.textContent = document.title.trimStart().split(" ")[0];
     navlink.classList.add("live");
-    document.querySelector("nav").appendChild(navlink)
+    document.querySelector("nav div").appendChild(navlink)
 }
 
 document.querySelectorAll("time").forEach(el => {

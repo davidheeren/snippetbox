@@ -44,3 +44,17 @@ func (cfg *config) middlewareRecoverPanic(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (cfg *config) middlewareRequireAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !cfg.isAuthenticated(r) {
+			cfg.sessionManager.Put(r.Context(), "flash", "You need to be logged in")
+			cfg.redirect(w, r, "/users/login")
+			return
+		}
+
+		// do not cache pages that requre auth
+		w.Header().Add("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}

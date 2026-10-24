@@ -9,13 +9,10 @@ import (
 func (cfg *config) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	dynamic := alice.New(cfg.sessionManager.LoadAndSave)
+	fileServer := http.FileServer(http.Dir("./ui/static"))
+	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	mux.Handle("GET /{$}", dynamic.ThenFunc(cfg.handlerHome))
-	mux.Handle("GET /snippets/view/{id}", dynamic.ThenFunc(cfg.handlerSnippetView))
-	mux.Handle("GET /snippets/create", dynamic.ThenFunc(cfg.handlerSnippetCreate))
-	mux.Handle("POST /snippets", dynamic.ThenFunc(cfg.handlerSnippetPost))
-	mux.Handle("DELETE /snippets/{id}", dynamic.ThenFunc(cfg.handlerSnippetDelete))
+	dynamic := alice.New(cfg.sessionManager.LoadAndSave)
 
 	mux.Handle("GET /users/signup", dynamic.ThenFunc(cfg.handlerUserSignup))
 	mux.Handle("POST /users", dynamic.ThenFunc(cfg.handlerUserSignupPost))
@@ -23,8 +20,13 @@ func (cfg *config) routes() http.Handler {
 	mux.Handle("POST /users/login", dynamic.ThenFunc(cfg.handlerUserLoginPost))
 	mux.Handle("POST /users/logout", dynamic.ThenFunc(cfg.handlerUserLogoutPost))
 
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	protected := dynamic.Append(cfg.middlewareRequireAuthentication)
+
+	mux.Handle("GET /{$}", protected.ThenFunc(cfg.handlerHome))
+	mux.Handle("GET /snippets/view/{id}", protected.ThenFunc(cfg.handlerSnippetView))
+	mux.Handle("GET /snippets/create", protected.ThenFunc(cfg.handlerSnippetCreate))
+	mux.Handle("POST /snippets", protected.ThenFunc(cfg.handlerSnippetPost))
+	mux.Handle("DELETE /snippets/{id}", protected.ThenFunc(cfg.handlerSnippetDelete))
 
 	standardMiddleware := alice.New(cfg.middlewareRecoverPanic, cfg.middlewareLogRequest, middlewareCommonHeaders)
 	return standardMiddleware.Then(mux)
