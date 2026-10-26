@@ -12,7 +12,7 @@ func (cfg *config) routes() http.Handler {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	dynamic := alice.New(cfg.sessionManager.LoadAndSave)
+	dynamic := alice.New(cfg.sessionManager.LoadAndSave, middlewarePreventCSRF)
 
 	mux.Handle("GET /users/signup", dynamic.ThenFunc(cfg.handlerUserSignup))
 	mux.Handle("POST /users", dynamic.ThenFunc(cfg.handlerUserSignupPost))

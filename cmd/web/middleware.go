@@ -58,3 +58,8 @@ func (cfg *config) middlewareRequireAuthentication(next http.Handler) http.Handl
 		next.ServeHTTP(w, r)
 	})
 }
+
+func middlewarePreventCSRF(next http.Handler) http.Handler {
+	cop := http.NewCrossOriginProtection()
+	return cop.Handler(next)
+}
