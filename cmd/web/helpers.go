@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+
+	"github.com/davidheeren/snippetbox/internal/database"
 )
 
 func (cfg *config) serverError(w http.ResponseWriter, r *http.Request, err error) {
@@ -78,6 +80,6 @@ func (cfg *config) redirect(w http.ResponseWriter, r *http.Request, url string) 
 }
 
 func (cfg *config) isAuthenticated(r *http.Request) bool {
-	// the user could be deleted but kept its session
-    return cfg.sessionManager.Exists(r.Context(), "authenticatedUserID")
+	_, ok := r.Context().Value(authenticatedUserContextKey).(database.User)
+	return ok
 }

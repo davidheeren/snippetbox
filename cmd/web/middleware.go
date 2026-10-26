@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func middlewareCommonHeaders(next http.Handler) http.Handler {
@@ -55,6 +60,38 @@ func (cfg *config) middlewareRequireAuthentication(next http.Handler) http.Handl
 
 		// do not cache pages that requre auth
 		w.Header().Add("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (cfg *config) middlewareAuthenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		idStr := cfg.sessionManager.GetString(r.Context(), "authenticatedUserID")
+		if idStr == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		userID, err := uuid.Parse(idStr)
+		if err != nil {
+			cfg.sessionManager.Remove(r.Context(), "authenticatedUserID")
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		user, err := cfg.dbQueries.GetUserByID(r.Context(), userID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				cfg.sessionManager.Remove(r.Context(), "authenticatedUserID")
+				next.ServeHTTP(w, r)
+				return
+			}
+			cfg.serverError(w, r, err)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), authenticatedUserContextKey, user)
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
