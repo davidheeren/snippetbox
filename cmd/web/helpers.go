@@ -45,6 +45,7 @@ func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, pa
 		return
 	}
 
+	w.Header().Add("Vary", "HX-Request")
 	w.WriteHeader(status)
 	buf.WriteTo(w)
 }
@@ -65,6 +66,7 @@ func (cfg *config) renderPage(w http.ResponseWriter, r *http.Request, status int
 		return
 	}
 
+	w.Header().Add("Vary", "HX-Request")
 	w.WriteHeader(status)
 	buf.WriteTo(w)
 }
