@@ -3,14 +3,14 @@ package main
 import (
 	"net/http"
 
+	"github.com/davidheeren/snippetbox/ui"
 	"github.com/justinas/alice"
 )
 
 func (cfg *config) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	mux.Handle("GET /static/", middlewareCacheStatic(http.FileServerFS(ui.Files)))
 
 	dynamic := alice.New(cfg.sessionManager.LoadAndSave, middlewarePreventCSRF, cfg.middlewareAuthenticate)
 

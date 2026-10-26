@@ -36,6 +36,14 @@ func (cfg *config) middlewareLogRequest(next http.Handler) http.Handler {
 	})
 }
 
+func middlewareCacheStatic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// cache 1 hr
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (cfg *config) middlewareRecoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
