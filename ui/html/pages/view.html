@@ -1,22 +1,22 @@
 {{define "title"}}Snippet #{{.Snippet.ID}}{{end}}
 
 {{define "main"}}
-    {{with .Snippet}}
     <div class="snippet">
         <div class="metadata">
-            <strong>{{.Title}}</strong>
-            <span>#{{.ID}}</span>
+            <strong>{{.Snippet.Title}}</strong>
+            <span>Author: {{.Snippet.UserName}}</span>
         </div>
-        <pre><code>{{.Content}}</code></pre>
+        <pre><code>{{.Snippet.Content}}</code></pre>
         <div class="metadata">
-            <span>Created: <time>{{iso .CreatedAt}}</time></span>
-            <span>Expires: <time>{{iso .ExpiresAt}}</time></span>
+            <span>Created: <time>{{iso .Snippet.CreatedAt}}</time></span>
+            <span>Expires: <time>{{iso .Snippet.ExpiresAt}}</time></span>
         </div>
         <div class="metadata">
-            <button class="delete" hx-delete="/snippets/{{.ID}}" hx-confirm="Delete this snippet?" hx-target="closest .snippet">
+            {{if eq .AuthUser.ID .Snippet.UserID}}
+            <button class="delete" hx-delete="/snippets/{{.Snippet.ID}}" hx-confirm="Delete this snippet?" hx-target="closest .snippet">
                 Delete snippet
             </button>
+            {{end}}
         </div>
     </div>
-    {{end}}
 {{end}}

@@ -13,25 +13,32 @@ import (
 )
 
 const createSnippet = `-- name: CreateSnippet :one
-INSERT INTO snippets (id, created_at, updated_at, expires_at, title, content)
+INSERT INTO snippets (id, created_at, updated_at, expires_at, title, content, user_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
     $1,
     $2,
-    $3
-) RETURNING id, created_at, updated_at, expires_at, title, content
+    $3,
+    $4
+) RETURNING id, created_at, updated_at, expires_at, title, content, user_id
 `
 
 type CreateSnippetParams struct {
 	ExpiresAt time.Time
 	Title     string
 	Content   string
+	UserID    uuid.UUID
 }
 
 func (q *Queries) CreateSnippet(ctx context.Context, arg CreateSnippetParams) (Snippet, error) {
-	row := q.db.QueryRowContext(ctx, createSnippet, arg.ExpiresAt, arg.Title, arg.Content)
+	row := q.db.QueryRowContext(ctx, createSnippet,
+		arg.ExpiresAt,
+		arg.Title,
+		arg.Content,
+		arg.UserID,
+	)
 	var i Snippet
 	err := row.Scan(
 		&i.ID,
@@ -40,22 +47,31 @@ func (q *Queries) CreateSnippet(ctx context.Context, arg CreateSnippetParams) (S
 		&i.ExpiresAt,
 		&i.Title,
 		&i.Content,
+		&i.UserID,
 	)
 	return i, err
 }
 
-const deleteSnippet = `-- name: DeleteSnippet :exec
+const deleteSnippetWithUser = `-- name: DeleteSnippetWithUser :execrows
 DELETE FROM snippets
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteSnippet(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteSnippet, id)
-	return err
+type DeleteSnippetWithUserParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteSnippetWithUser(ctx context.Context, arg DeleteSnippetWithUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteSnippetWithUser, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const getSnippet = `-- name: GetSnippet :one
-SELECT id, created_at, updated_at, expires_at, title, content FROM snippets
+SELECT id, created_at, updated_at, expires_at, title, content, user_id FROM snippets
 WHERE id = $1
 `
 
@@ -69,12 +85,47 @@ func (q *Queries) GetSnippet(ctx context.Context, id uuid.UUID) (Snippet, error)
 		&i.ExpiresAt,
 		&i.Title,
 		&i.Content,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getSnippetWithUser = `-- name: GetSnippetWithUser :one
+SELECT s.id, s.created_at, s.updated_at, s.expires_at, s.title, s.content, s.user_id, u.name AS user_name
+FROM snippets s
+JOIN users u ON u.id = s.user_id
+WHERE s.id = $1
+`
+
+type GetSnippetWithUserRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+	Title     string
+	Content   string
+	UserID    uuid.UUID
+	UserName  string
+}
+
+func (q *Queries) GetSnippetWithUser(ctx context.Context, id uuid.UUID) (GetSnippetWithUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getSnippetWithUser, id)
+	var i GetSnippetWithUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiresAt,
+		&i.Title,
+		&i.Content,
+		&i.UserID,
+		&i.UserName,
 	)
 	return i, err
 }
 
 const getSnippets = `-- name: GetSnippets :many
-SELECT id, created_at, updated_at, expires_at, title, content FROM snippets
+SELECT id, created_at, updated_at, expires_at, title, content, user_id FROM snippets
 `
 
 func (q *Queries) GetSnippets(ctx context.Context) ([]Snippet, error) {
@@ -93,6 +144,56 @@ func (q *Queries) GetSnippets(ctx context.Context) ([]Snippet, error) {
 			&i.ExpiresAt,
 			&i.Title,
 			&i.Content,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSnippetsWithUser = `-- name: GetSnippetsWithUser :many
+SELECT s.id, s.created_at, s.updated_at, s.expires_at, s.title, s.content, s.user_id, u.name AS user_name
+FROM snippets s
+JOIN users u ON u.id = s.user_id
+`
+
+type GetSnippetsWithUserRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+	Title     string
+	Content   string
+	UserID    uuid.UUID
+	UserName  string
+}
+
+func (q *Queries) GetSnippetsWithUser(ctx context.Context) ([]GetSnippetsWithUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSnippetsWithUser)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSnippetsWithUserRow
+	for rows.Next() {
+		var i GetSnippetsWithUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExpiresAt,
+			&i.Title,
+			&i.Content,
+			&i.UserID,
+			&i.UserName,
 		); err != nil {
 			return nil, err
 		}

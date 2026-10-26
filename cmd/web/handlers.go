@@ -15,7 +15,7 @@ import (
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
-	snippets, err := cfg.dbQueries.GetSnippets(r.Context())
+	snippets, err := cfg.dbQueries.GetSnippetsWithUser(r.Context())
 	if err != nil {
 		cfg.serverError(w, r, err)
 		return
@@ -33,7 +33,7 @@ func (cfg *config) handlerSnippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippet, err := cfg.dbQueries.GetSnippet(r.Context(), id)
+	snippet, err := cfg.dbQueries.GetSnippetWithUser(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			cfg.clientError(w, r, http.StatusNotFound)
@@ -64,6 +64,11 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(authenticatedUserContextKey).(database.User)
+	if !ok {
+		cfg.serverError(w, r, errors.New("user is not authenticated"))
+	}
+
 	err := r.ParseForm()
 	if err != nil {
 		cfg.clientError(w, r, http.StatusBadRequest)
@@ -100,6 +105,7 @@ func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt: time.Now().UTC().Add(expiresDuration),
 		Title:     form.Title,
 		Content:   form.Content,
+		UserID:    user.ID,
 	})
 	if err != nil {
 		cfg.serverError(w, r, err)
@@ -117,13 +123,21 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = cfg.dbQueries.DeleteSnippet(r.Context(), id)
+	user, ok := r.Context().Value(authenticatedUserContextKey).(database.User)
+	if !ok {
+		cfg.clientError(w, r, http.StatusUnauthorized)
+	}
+
+	rows, err := cfg.dbQueries.DeleteSnippetWithUser(r.Context(), database.DeleteSnippetWithUserParams{
+		ID:     id,
+		UserID: user.ID,
+	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			cfg.clientError(w, r, http.StatusNotFound)
-		} else {
-			cfg.serverError(w, r, err)
-		}
+		cfg.serverError(w, r, err)
+		return
+	}
+	if rows == 0 {
+		cfg.clientError(w, r, http.StatusNotFound)
 		return
 	}
 
@@ -272,15 +286,15 @@ func (cfg *config) handlerUserLoginPost(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *config) handlerUserLogoutPost(w http.ResponseWriter, r *http.Request) {
-    err := cfg.sessionManager.RenewToken(r.Context())
-    if err != nil {
-        cfg.serverError(w, r, err)
-        return
-    }
+	err := cfg.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
 
-    cfg.sessionManager.Remove(r.Context(), "authenticatedUserID")
+	cfg.sessionManager.Remove(r.Context(), "authenticatedUserID")
 
-    cfg.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+	cfg.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 
 	cfg.redirect(w, r, "/users/login")
 }

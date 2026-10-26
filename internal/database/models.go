@@ -23,6 +23,7 @@ type Snippet struct {
 	ExpiresAt time.Time
 	Title     string
 	Content   string
+	UserID    uuid.UUID
 }
 
 type User struct {
