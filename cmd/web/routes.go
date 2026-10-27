@@ -28,6 +28,6 @@ func (cfg *config) routes() http.Handler {
 	mux.Handle("POST /snippets", protected.ThenFunc(cfg.handlerSnippetPost))
 	mux.Handle("DELETE /snippets/{id}", protected.ThenFunc(cfg.handlerSnippetDelete))
 
-	standardMiddleware := alice.New(cfg.middlewareRecoverPanic, cfg.middlewareLogRequest, middlewareCommonHeaders)
+	standardMiddleware := alice.New(cfg.middlewareRecoverPanic, middlewareCommonHeaders)
 	return standardMiddleware.Then(mux)
 }
