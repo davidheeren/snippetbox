@@ -20,14 +20,18 @@ FROM snippets s
 JOIN users u ON u.id = s.user_id
 WHERE s.id = $1;
 
--- name: DeleteSnippetWithUser :execrows
+-- name: DeleteSnippetByUser :execrows
 DELETE FROM snippets
 WHERE id = $1 AND user_id = $2;
+
+-- name: DeleteSnippet :execrows
+DELETE FROM snippets
+WHERE id = $1;
 
 -- name: GetSnippets :many
 SELECT * FROM snippets;
 
--- name: GetSnippetsWithUser :many
+-- name: GetSnippetsByUser :many
 SELECT s.*, u.name AS user_name
 FROM snippets s
 JOIN users u ON u.id = s.user_id;

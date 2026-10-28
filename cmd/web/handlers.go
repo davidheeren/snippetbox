@@ -15,7 +15,7 @@ import (
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
-	snippets, err := cfg.dbQueries.GetSnippetsWithUser(r.Context())
+	snippets, err := cfg.dbQueries.GetSnippetsByUser(r.Context())
 	if err != nil {
 		cfg.serverError(w, r, err)
 		return
@@ -128,17 +128,21 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 		cfg.clientError(w, r, http.StatusUnauthorized)
 	}
 
-	rows, err := cfg.dbQueries.DeleteSnippetWithUser(r.Context(), database.DeleteSnippetWithUserParams{
-		ID:     id,
-		UserID: user.ID,
-	})
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
-	if rows == 0 {
-		cfg.clientError(w, r, http.StatusNotFound)
-		return
+	if user.IsAdmin {
+		cfg.dbQueries.DeleteSnippet(r.Context(), id)
+	} else {
+		rows, err := cfg.dbQueries.DeleteSnippetByUser(r.Context(), database.DeleteSnippetByUserParams{
+			ID:     id,
+			UserID: user.ID,
+		})
+		if err != nil {
+			cfg.serverError(w, r, err)
+			return
+		}
+		if rows == 0 {
+			cfg.clientError(w, r, http.StatusNotFound)
+			return
+		}
 	}
 
 	cfg.sessionManager.Put(r.Context(), "flash", "Snippet successfully deleted!")
@@ -199,6 +203,7 @@ func (cfg *config) handlerUserSignupPost(w http.ResponseWriter, r *http.Request)
 		Name:           form.Name,
 		Email:          form.Email,
 		HashedPassword: string(hash),
+		IsAdmin:        false,
 	})
 	if err != nil {
 		var pqErr *pq.Error

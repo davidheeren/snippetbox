@@ -12,7 +12,7 @@
             <span>Expires: <time>{{iso .Snippet.ExpiresAt}}</time></span>
         </div>
         <div class="metadata">
-            {{if eq .AuthUser.ID .Snippet.UserID}}
+            {{if or .AuthUser.IsAdmin (eq .AuthUser.ID .Snippet.UserID)}}
             <button class="delete" hx-delete="/snippets/{{.Snippet.ID}}" hx-confirm="Delete this snippet?" hx-target="closest .snippet">
                 Delete snippet
             </button>

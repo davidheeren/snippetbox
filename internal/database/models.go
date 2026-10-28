@@ -33,4 +33,5 @@ type User struct {
 	Name           string
 	Email          string
 	HashedPassword string
+	IsAdmin        bool
 }

@@ -1,7 +1,7 @@
 {{define "title"}}Home{{end}}
 
 {{define "main"}}
-<h1>Welcome {{.AuthUser.Name}}!</h1>
+<h1>Welcome {{.AuthUser.Name}}{{if .AuthUser.IsAdmin}} (Admin){{end}}!</h1>
 <h2>Latest Snippets</h2>
     {{if .Snippets}}
     <table>
