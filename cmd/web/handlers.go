@@ -130,6 +130,10 @@ func (cfg *config) handlerSnippetDelete(w http.ResponseWriter, r *http.Request) 
 
 	if user.IsAdmin {
 		cfg.dbQueries.DeleteSnippet(r.Context(), id)
+		if err != nil {
+			cfg.serverError(w, r, err)
+			return
+		}
 	} else {
 		rows, err := cfg.dbQueries.DeleteSnippetByUser(r.Context(), database.DeleteSnippetByUserParams{
 			ID:     id,
