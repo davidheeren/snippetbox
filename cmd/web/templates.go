@@ -17,8 +17,7 @@ type templateData struct {
 	Snippets        []database.GetSnippetsWithUserRow
 	Form            any
 	Flash           string
-	IsAuthenticated bool
-	AuthUser        database.User
+	AuthUser        *database.User
 }
 
 func (cfg *config) newTemplateData(r *http.Request) templateData {
@@ -26,10 +25,9 @@ func (cfg *config) newTemplateData(r *http.Request) templateData {
 	data := templateData{
 		CurrentYear:     time.Now().Year(),
 		Flash:           cfg.sessionManager.PopString(r.Context(), "flash"),
-		IsAuthenticated: cfg.isAuthenticated(r),
 	}
 	if ok {
-		data.AuthUser = user
+		data.AuthUser = &user
 	}
 	return data
 }

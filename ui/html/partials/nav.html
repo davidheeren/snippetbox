@@ -2,12 +2,12 @@
 <nav>
     <div>
         <a href="/">Home</a>
-        {{if .IsAuthenticated}}
+        {{if .AuthUser}}
             <a href="/snippets/create">Create</a>
         {{end}}
     </div>
     <div>
-        {{if .IsAuthenticated}}
+        {{if .AuthUser}}
             <a href="#" hx-post="/users/logout">Logout</a>
         {{else}}
             <a href="/users/signup">Signup</a>
