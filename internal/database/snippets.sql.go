@@ -137,48 +137,14 @@ func (q *Queries) GetSnippetWithUser(ctx context.Context, id uuid.UUID) (GetSnip
 	return i, err
 }
 
-const getSnippets = `-- name: GetSnippets :many
-SELECT id, created_at, updated_at, expires_at, title, content, user_id FROM snippets
-`
-
-func (q *Queries) GetSnippets(ctx context.Context) ([]Snippet, error) {
-	rows, err := q.db.QueryContext(ctx, getSnippets)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Snippet
-	for rows.Next() {
-		var i Snippet
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ExpiresAt,
-			&i.Title,
-			&i.Content,
-			&i.UserID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getSnippetsByUser = `-- name: GetSnippetsByUser :many
+const getSnippetsWithUser = `-- name: GetSnippetsWithUser :many
 SELECT s.id, s.created_at, s.updated_at, s.expires_at, s.title, s.content, s.user_id, u.name AS user_name
 FROM snippets s
 JOIN users u ON u.id = s.user_id
+ORDER BY s.created_at DESC
 `
 
-type GetSnippetsByUserRow struct {
+type GetSnippetsWithUserRow struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -189,15 +155,15 @@ type GetSnippetsByUserRow struct {
 	UserName  string
 }
 
-func (q *Queries) GetSnippetsByUser(ctx context.Context) ([]GetSnippetsByUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getSnippetsByUser)
+func (q *Queries) GetSnippetsWithUser(ctx context.Context) ([]GetSnippetsWithUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getSnippetsWithUser)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSnippetsByUserRow
+	var items []GetSnippetsWithUserRow
 	for rows.Next() {
-		var i GetSnippetsByUserRow
+		var i GetSnippetsWithUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,

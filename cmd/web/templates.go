@@ -14,7 +14,7 @@ import (
 type templateData struct {
 	CurrentYear     int
 	Snippet         database.GetSnippetWithUserRow
-	Snippets        []database.GetSnippetsByUserRow
+	Snippets        []database.GetSnippetsWithUserRow
 	Form            any
 	Flash           string
 	AuthUser        *database.User

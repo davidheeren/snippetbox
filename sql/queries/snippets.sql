@@ -28,10 +28,8 @@ WHERE id = $1 AND user_id = $2;
 DELETE FROM snippets
 WHERE id = $1;
 
--- name: GetSnippets :many
-SELECT * FROM snippets;
-
--- name: GetSnippetsByUser :many
+-- name: GetSnippetsWithUser :many
 SELECT s.*, u.name AS user_name
 FROM snippets s
-JOIN users u ON u.id = s.user_id;
+JOIN users u ON u.id = s.user_id
+ORDER BY s.created_at DESC;

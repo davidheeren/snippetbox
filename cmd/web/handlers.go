@@ -15,7 +15,7 @@ import (
 )
 
 func (cfg *config) handlerHome(w http.ResponseWriter, r *http.Request) {
-	snippets, err := cfg.dbQueries.GetSnippetsByUser(r.Context())
+	snippets, err := cfg.dbQueries.GetSnippetsWithUser(r.Context())
 	if err != nil {
 		cfg.serverError(w, r, err)
 		return
