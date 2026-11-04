@@ -18,5 +18,5 @@ if (!hasNav) {
 }
 
 document.querySelectorAll("time").forEach(el => {
-    el.textContent = new Date(el.textContent).toLocaleString()
+    el.textContent = new Date(el.textContent).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
 });
