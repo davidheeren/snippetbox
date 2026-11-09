@@ -11,6 +11,5 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/lib/pq v1.12.3
 	golang.org/x/crypto v0.58.0
+	gopkg.in/loremipsum.v1 v1.1.2
 )
-
-require gopkg.in/loremipsum.v1 v1.1.2 // indirect
