@@ -83,6 +83,19 @@ func (q *Queries) DeleteSnippetByUser(ctx context.Context, arg DeleteSnippetByUs
 	return result.RowsAffected()
 }
 
+const deleteSnippetsByUser = `-- name: DeleteSnippetsByUser :execrows
+DELETE FROM snippets
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteSnippetsByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteSnippetsByUser, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const getSnippet = `-- name: GetSnippet :one
 SELECT id, created_at, updated_at, expires_at, title, content, user_id FROM snippets
 WHERE id = $1

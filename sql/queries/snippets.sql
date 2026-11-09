@@ -18,6 +18,10 @@ WHERE id = $1;
 DELETE FROM snippets
 WHERE id = $1 AND user_id = $2;
 
+-- name: DeleteSnippetsByUser :execrows
+DELETE FROM snippets
+WHERE user_id = $1;
+
 -- name: DeleteSnippet :execrows
 DELETE FROM snippets
 WHERE id = $1;
