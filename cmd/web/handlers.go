@@ -80,6 +80,7 @@ func (cfg *config) handlerSnippetsSearch(w http.ResponseWriter, r *http.Request)
 
 	data := cfg.newTemplateData(r)
 	data.Snippets = snippets
+	data.Query = query
 	if r.Header.Get("HX-Request") == "true" {
 		cfg.renderTemplate(w, r, http.StatusOK, "home.html", "snippets", data)
 		return

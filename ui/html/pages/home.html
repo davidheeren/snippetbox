@@ -7,7 +7,8 @@
         hx-trigger="input changed delay:500ms, submit"
         hx-target="#snippets"
         hx-push-url="true">
-        <input type="search" name="query" placeholder="Begin Typing To Search By Title...">
+        <input type="search" name="query"
+        value="{{.Query}}" placeholder="Begin Typing To Search By Title...">
     </form>
     <div id="snippets">
     {{template "snippets" .}}

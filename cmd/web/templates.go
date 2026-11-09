@@ -1,10 +1,10 @@
 package main
 
 import (
+	"html/template"
 	"io/fs"
 	"net/http"
 	"path/filepath"
-	"html/template"
 	"time"
 
 	"github.com/davidheeren/snippetbox/internal/database"
@@ -12,19 +12,20 @@ import (
 )
 
 type templateData struct {
-	CurrentYear     int
-	Snippet         database.SnippetsWithUser
-	Snippets        []database.SnippetsWithUser
-	Form            any
-	Flash           string
-	AuthUser        *database.User
+	CurrentYear int
+	Snippet     database.SnippetsWithUser
+	Snippets    []database.SnippetsWithUser
+	Form        any
+	Flash       string
+	AuthUser    *database.User
+	Query       string
 }
 
 func (cfg *config) newTemplateData(r *http.Request) templateData {
 	user, ok := r.Context().Value(authenticatedUserContextKey).(database.User)
 	data := templateData{
-		CurrentYear:     time.Now().Year(),
-		Flash:           cfg.sessionManager.PopString(r.Context(), "flash"),
+		CurrentYear: time.Now().Year(),
+		Flash:       cfg.sessionManager.PopString(r.Context(), "flash"),
 	}
 	if ok {
 		data.AuthUser = &user
