@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path/filepath"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/davidheeren/snippetbox/internal/database"
@@ -13,8 +13,8 @@ import (
 
 type templateData struct {
 	CurrentYear     int
-	Snippet         database.GetSnippetWithUserRow
-	Snippets        []database.GetSnippetsWithUserRow
+	Snippet         database.SnippetsWithUser
+	Snippets        []database.SnippetsWithUser
 	Form            any
 	Flash           string
 	AuthUser        *database.User

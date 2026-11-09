@@ -14,12 +14,6 @@ VALUES (
 SELECT * FROM snippets
 WHERE id = $1;
 
--- name: GetSnippetWithUser :one
-SELECT s.*, u.name AS user_name
-FROM snippets s
-JOIN users u ON u.id = s.user_id
-WHERE s.id = $1;
-
 -- name: DeleteSnippetByUser :execrows
 DELETE FROM snippets
 WHERE id = $1 AND user_id = $2;
@@ -28,8 +22,18 @@ WHERE id = $1 AND user_id = $2;
 DELETE FROM snippets
 WHERE id = $1;
 
+-- name: GetSnippetWithUser :one
+SELECT * FROM snippets_with_user
+WHERE id = $1;
+
 -- name: GetSnippetsWithUser :many
-SELECT s.*, u.name AS user_name
-FROM snippets s
-JOIN users u ON u.id = s.user_id
-ORDER BY s.created_at DESC;
+SELECT * FROM snippets_with_user
+ORDER BY created_at DESC;
+
+-- name: SearchSnippetsWithUser :many
+SELECT * FROM snippets_with_user
+WHERE title ILIKE ALL (
+    SELECT '%' || word || '%'
+    FROM unnest(regexp_split_to_array(trim($1::text), '\s+')) AS word
+)
+ORDER BY created_at DESC;

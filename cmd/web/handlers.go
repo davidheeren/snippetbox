@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/davidheeren/snippetbox/internal/database"
@@ -61,6 +62,29 @@ func (cfg *config) handlerSnippetCreate(w http.ResponseWriter, r *http.Request) 
 		Expires: 7,
 	}
 	cfg.render(w, r, http.StatusOK, "create.html", data)
+}
+
+func (cfg *config) handlerSnippetsSearch(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("query"))
+	var snippets []database.SnippetsWithUser
+	var err error
+	if query == "" {
+		snippets, err = cfg.dbQueries.GetSnippetsWithUser(r.Context())
+	} else {
+		snippets, err = cfg.dbQueries.SearchSnippetsWithUser(r.Context(), query)
+	}
+	if err != nil {
+		cfg.serverError(w, r, err)
+		return
+	}
+
+	data := cfg.newTemplateData(r)
+	data.Snippets = snippets
+	if r.Header.Get("HX-Request") == "true" {
+		cfg.renderTemplate(w, r, http.StatusOK, "home.html", "snippets", data)
+		return
+	}
+	cfg.render(w, r, http.StatusOK, "home.html", data)
 }
 
 func (cfg *config) handlerSnippetPost(w http.ResponseWriter, r *http.Request) {

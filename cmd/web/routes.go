@@ -26,6 +26,7 @@ func (cfg *config) routes() http.Handler {
 	mux.Handle("GET /snippets/view/{id}", protected.ThenFunc(cfg.handlerSnippetView))
 	mux.Handle("GET /snippets/create", protected.ThenFunc(cfg.handlerSnippetCreate))
 	mux.Handle("POST /snippets", protected.ThenFunc(cfg.handlerSnippetPost))
+	mux.Handle("GET /snippets/search", protected.ThenFunc(cfg.handlerSnippetsSearch))
 	mux.Handle("DELETE /snippets/{id}", protected.ThenFunc(cfg.handlerSnippetDelete))
 
 	standardMiddleware := alice.New(cfg.middlewareRecoverPanic, middlewareCommonHeaders)

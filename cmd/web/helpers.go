@@ -29,7 +29,7 @@ func (cfg *config) clientError(w http.ResponseWriter, r *http.Request, status in
 	http.Error(w, http.StatusText(status), status)
 }
 
-func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+func (cfg *config) renderTemplate(w http.ResponseWriter, r *http.Request, status int, page, name string, data templateData) {
 	ts, ok := cfg.templateCache[page]
 	if !ok {
 		err := fmt.Errorf("the template %s does not exist", page)
@@ -39,7 +39,7 @@ func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, pa
 
 	buf := new(bytes.Buffer)
 
-	err := ts.ExecuteTemplate(buf, "base", data)
+	err := ts.ExecuteTemplate(buf, name, data)
 	if err != nil {
 		cfg.serverError(w, r, err)
 		return
@@ -50,25 +50,12 @@ func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, pa
 	buf.WriteTo(w)
 }
 
+func (cfg *config) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+	cfg.renderTemplate(w, r, status, page, "base", data)
+}
+
 func (cfg *config) renderPage(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
-	ts, ok := cfg.templateCache[page]
-	if !ok {
-		err := fmt.Errorf("the template %s does not exist", page)
-		cfg.serverError(w, r, err)
-		return
-	}
-
-	buf := new(bytes.Buffer)
-
-	err := ts.ExecuteTemplate(buf, "main", data)
-	if err != nil {
-		cfg.serverError(w, r, err)
-		return
-	}
-
-	w.Header().Add("Vary", "HX-Request")
-	w.WriteHeader(status)
-	buf.WriteTo(w)
+	cfg.renderTemplate(w, r, status, page, "main", data)
 }
 
 func (cfg *config) redirect(w http.ResponseWriter, r *http.Request, url string) {

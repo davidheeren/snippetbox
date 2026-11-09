@@ -104,26 +104,13 @@ func (q *Queries) GetSnippet(ctx context.Context, id uuid.UUID) (Snippet, error)
 }
 
 const getSnippetWithUser = `-- name: GetSnippetWithUser :one
-SELECT s.id, s.created_at, s.updated_at, s.expires_at, s.title, s.content, s.user_id, u.name AS user_name
-FROM snippets s
-JOIN users u ON u.id = s.user_id
-WHERE s.id = $1
+SELECT id, created_at, updated_at, expires_at, title, content, user_id, user_name FROM snippets_with_user
+WHERE id = $1
 `
 
-type GetSnippetWithUserRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ExpiresAt time.Time
-	Title     string
-	Content   string
-	UserID    uuid.UUID
-	UserName  string
-}
-
-func (q *Queries) GetSnippetWithUser(ctx context.Context, id uuid.UUID) (GetSnippetWithUserRow, error) {
+func (q *Queries) GetSnippetWithUser(ctx context.Context, id uuid.UUID) (SnippetsWithUser, error) {
 	row := q.db.QueryRowContext(ctx, getSnippetWithUser, id)
-	var i GetSnippetWithUserRow
+	var i SnippetsWithUser
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
@@ -138,32 +125,60 @@ func (q *Queries) GetSnippetWithUser(ctx context.Context, id uuid.UUID) (GetSnip
 }
 
 const getSnippetsWithUser = `-- name: GetSnippetsWithUser :many
-SELECT s.id, s.created_at, s.updated_at, s.expires_at, s.title, s.content, s.user_id, u.name AS user_name
-FROM snippets s
-JOIN users u ON u.id = s.user_id
-ORDER BY s.created_at DESC
+SELECT id, created_at, updated_at, expires_at, title, content, user_id, user_name FROM snippets_with_user
+ORDER BY created_at DESC
 `
 
-type GetSnippetsWithUserRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ExpiresAt time.Time
-	Title     string
-	Content   string
-	UserID    uuid.UUID
-	UserName  string
-}
-
-func (q *Queries) GetSnippetsWithUser(ctx context.Context) ([]GetSnippetsWithUserRow, error) {
+func (q *Queries) GetSnippetsWithUser(ctx context.Context) ([]SnippetsWithUser, error) {
 	rows, err := q.db.QueryContext(ctx, getSnippetsWithUser)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSnippetsWithUserRow
+	var items []SnippetsWithUser
 	for rows.Next() {
-		var i GetSnippetsWithUserRow
+		var i SnippetsWithUser
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExpiresAt,
+			&i.Title,
+			&i.Content,
+			&i.UserID,
+			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchSnippetsWithUser = `-- name: SearchSnippetsWithUser :many
+SELECT id, created_at, updated_at, expires_at, title, content, user_id, user_name FROM snippets_with_user
+WHERE title ILIKE ALL (
+    SELECT '%' || word || '%'
+    FROM unnest(regexp_split_to_array(trim($1::text), '\s+')) AS word
+)
+ORDER BY created_at DESC
+`
+
+func (q *Queries) SearchSnippetsWithUser(ctx context.Context, dollar_1 string) ([]SnippetsWithUser, error) {
+	rows, err := q.db.QueryContext(ctx, searchSnippetsWithUser, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SnippetsWithUser
+	for rows.Next() {
+		var i SnippetsWithUser
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,

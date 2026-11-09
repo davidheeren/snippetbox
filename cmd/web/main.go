@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/alexedwards/scs/postgresstore"

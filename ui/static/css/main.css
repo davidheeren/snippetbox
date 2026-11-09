@@ -7,6 +7,10 @@ body {
     font-size: 1.25rem;
 }
 
+.contents {
+    display: contents;
+}
+
 nav {
     background-image: linear-gradient(var(--b-bg-2), var(--b-bg-1));
     border: 2px solid var(--b-bg-2);
@@ -79,6 +83,9 @@ input[type="radio"] {
     accent-color: var(--b-link);
 }
 
+input[type="search"] {
+    margin-bottom: 1rem;
+}
 .error {
     color: var(--b-link);
     font-weight: bold;

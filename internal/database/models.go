@@ -26,6 +26,17 @@ type Snippet struct {
 	UserID    uuid.UUID
 }
 
+type SnippetsWithUser struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+	Title     string
+	Content   string
+	UserID    uuid.UUID
+	UserName  string
+}
+
 type User struct {
 	ID             uuid.UUID
 	CreatedAt      time.Time
