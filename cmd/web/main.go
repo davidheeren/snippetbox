@@ -4,11 +4,11 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"html/template"
 	"time"
 
 	"github.com/alexedwards/scs/postgresstore"
