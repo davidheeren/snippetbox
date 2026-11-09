@@ -18,9 +18,11 @@ if (!hasNav) {
     document.querySelector("nav div").appendChild(navlink)
 }
 
-// htmx:load fires for the body on page load and for any content swapped in by htmx
-document.addEventListener("htmx:load", e => {
-    e.detail.elt.querySelectorAll("time").forEach(el => {
+function localizeTimes(root) {
+    root.querySelectorAll("time").forEach(el => {
         el.textContent = new Date(el.textContent).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })
     })
-});
+}
+
+localizeTimes(document)
+document.addEventListener("htmx:afterSwap", e => localizeTimes(e.detail.target))
